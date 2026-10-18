@@ -1,15 +1,31 @@
 on:
   schedule:
-    - cron: '0 0 * * 0'
+    # Saturday 06:00 UTC, the same slot as Dependabot's weekly updates in the
+    # repositories this covers, so all the week's update pull requests arrive
+    # together.
+    - cron: '0 6 * * 6'
   workflow_dispatch:
 
 name: Launch Scala Steward
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   scala-steward:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Launch Scala Steward
+    timeout-minutes: 60
     steps:
+      # A current JDK rather than the runner's default, so that builds needing
+      # one (plutus is on JDK 25 for the Foreign Function & Memory API) load.
+      - name: Set up the JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 25
+
       - name: Launch Scala Steward
         uses: scala-steward-org/scala-steward-action@v2
         with:
